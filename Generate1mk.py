@@ -24,29 +24,35 @@ def process_data(product_code, start_date, end_date):
                 'Date', 'ProductCode', 'ExpiryMonth(Week)', 'TradeTime', 
                 'TradePrice', 'TradeVolume(B+S)', 'NearMonthPrice', 'FarMonthPrice', 'OpeningAuctionPrice'
             ]
+            # product code "TX    " -> "TX"
             df.columns = df.columns.str.strip()
             df['ProductCode'] = df['ProductCode'].str.strip()
 
-            # Filter data
-            df = df[df['ProductCode'] == product_code]
+
+            # # Filter data
+            df = df[df['ProductCode'] == 'TX']
 
             # Clean TradeTime column
-            df['TradeTime'] = df['TradeTime'].astype(str).str.zfill(6)
-
             # Ensure the 'TradeTime' column is in datetime format
-            df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='%H%M%S', errors='coerce')
-
             # Drop rows with invalid TradeTime
+            df['TradeTime'] = df['TradeTime'].astype(str).str.zfill(6)
+            df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='%H%M%S', errors='coerce')
             df = df.dropna(subset=['TradeTime'])
 
-            # Convert Date column to string
+            # # Convert Date column to string
             df['Date'] = df['Date'].astype(str)
 
-            # Combine Date and TradeTime into a single datetime column
+            # # Combine Date and TradeTime into a single datetime column
             df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['TradeTime'].dt.strftime('%H:%M:%S'))
+            df.drop(columns=['Date', 'TradeTime'], inplace=True)
 
-            # Set 'Datetime' as the index for resampling
+            # # Set 'Datetime' as the index for resampling
             df.set_index('Datetime', inplace=True)
+
+            # ExpiryMonth(Week) sholud be one like 202408 if like 202408/202409, we should drop it
+            df = df[~df['ExpiryMonth(Week)'].str.contains('/')]
+
+            df_1m = df['TradePrice'].resample('1min').ohlc()
 
             all_data.append(df)
 

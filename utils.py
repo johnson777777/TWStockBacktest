@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
 import pandas as pd
 import yfinance as yf
-
+import os
 def rename_columns(df):
     # df = df.rename(columns={"date": "Date"})
     df.set_index("date", inplace=True)
